@@ -51,7 +51,7 @@ _installYay() {
     cd ~/Downloads/yay
     makepkg -si
     cd $temp_path
-    echo 1 "yay has been installed successfully."
+    echo "yay has been installed successfully."
 }
 # Required packages for the installer
 packages=(
@@ -138,7 +138,7 @@ echo
 
 # yay 
 echo ":: Checking yay installed..."
-_installYay()
+_installYay;
 echo
 
 

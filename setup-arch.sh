@@ -47,14 +47,11 @@ _installPackages() {
     sudo pacman --noconfirm -S "${toInstall[@]}";
 }
 _installYay() {
-    _installPackages "base-devel"
-    SCRIPT=$(realpath "$0")
-    temp_path=$(dirname "$SCRIPT")
     git clone https://aur.archlinux.org/yay.git ~/Downloads/yay
     cd ~/Downloads/yay
     makepkg -si
     cd $temp_path
-    _writeLogTerminal 1 "yay has been installed successfully."
+    echo 1 "yay has been installed successfully."
 }
 # Required packages for the installer
 packages=(
@@ -63,6 +60,7 @@ packages=(
     "gum"
     "rsync"
     "git"
+    "base-devel"
 )
 
 latest_version=$(get_latest_release)

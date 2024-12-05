@@ -1,7 +1,7 @@
 #!/bin/bash
 clear
 
-repo="mylinuxforwork/dotfiles"
+repo="jithurbide-CPNV/dotfiles"
 
 # Get latest tag from GitHub
 get_latest_release() {
@@ -127,6 +127,14 @@ echo
 echo ":: Checking that required packages are installed..."
 _installPackages "${packages[@]}";
 echo
+
+
+# yay 
+echo ":: Checking yay installed..."
+_installYay()
+echo
+
+
 # Select the dotfiles version
 echo "Please choose between: "
 echo "- ML4W Dotfiles for Hyprland $latest_version (latest stable release)"

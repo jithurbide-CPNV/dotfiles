@@ -6,7 +6,8 @@
 # |_____|_|_.__/|_|  \__,_|_|   \__, | 
 #                               |___/  
 #  
-# by Stephan Raabe (2024) 
+# Original  Stephan Raabe (2024) 
+# Modified  JustInTime (2024)
 # ----------------------------------------------------- 
 
 # ------------------------------------------------------
@@ -23,30 +24,19 @@ _writeHeader() {
 # Function: Is package installed
 # ------------------------------------------------------
 
+# Check if package is installed
 _isInstalled() {
     package="$1";
-    case $install_platform in
-        arch)
-            check="$(sudo pacman -Qs --color always "${package}" | grep "local" | grep "${package} ")";
-            if [ -n "${check}" ]; then
-                echo 0
-            else
-                echo 1
-            fi
-        ;;
-        fedora)
-            check=$(dnf list --installed | grep $package)
-            if [ -z "$check" ]; then
-                echo 1
-            else
-                echo 0
-            fi        
-        ;;
-        *)
-            _writeLogTerminal 2 "Selected platform $install_platform is not supported"
-            exit
-        ;;
-    esac    
+    check="$(sudo pacman -Qs --color always "${package}" | grep "local" | grep "${package} ")";
+    if [ -n "${check}" ] ; then
+        echo 0; #'0' means 'true' in Bash
+    else
+        echo 1; #'1' means 'false' in Bash
+    fi;
+    _writeLogTerminal 2 "Selected platform $install_platform is not supported"
+    exit
+    
+    return; #false
 }
 
 # ------------------------------------------------------
@@ -71,19 +61,10 @@ _installPackage() {
             # Check if installation script exist and not empty
             _writeLogTerminal 0 "Installing $1..."
 
-            # Run installation with platform command
-            case $install_platform in
-                arch)
-                    sudo pacman --noconfirm -S "$1" &>> $(_getLogFile)
-                ;;
-                fedora)
-                    sudo dnf install --assumeyes "$1" &>> $(_getLogFile)
-                ;;
-                *)
-                    _writeLogTerminal 2 "Selected platform $install_platform is not supported"
-                    exit
-                ;;
-            esac    
+            # Run installation with pacman
+        
+            sudo pacman --noconfirm -S "$1" &>> $(_getLogFile)
+       
 
             # Check that installation was successful
             if [[ $(_isInstalled "$1") == 0 ]]; then
@@ -95,26 +76,15 @@ _installPackage() {
     fi
 }
 
-_installPackages() {
-    for pkg; do
-        _installPackage "${pkg}"
-    done
-}
 
 _removePackage() {
     _writeLog 0 "Removing $1..."
-    case $install_platform in
-        arch)
-            sudo pacman --noconfirm -R "$1" &>> $(_getLogFile)
-        ;;
-        fedora)
-            sudo dnf remove --assumeyes "$1" &>> $(_getLogFile)
-        ;;
-        *)
-            _writeLogTerminal 2 "Selected platform $install_platform is not supported"
-            exit
-        ;;
-    esac    
+
+    sudo pacman --noconfirm -R "$1" &>> $(_getLogFile)
+
+    _writeLogTerminal 2 "Selected platform $install_platform is not supported"
+    exit
+
 }
 
 # ------------------------------------------------------
@@ -446,4 +416,12 @@ _folderExists() {
         echo ":: OK: $folder found."
         return 1
     fi
+}
+
+_installYay() {
+    git clone https://aur.archlinux.org/yay.git ~/Downloads/yay
+    cd ~/Downloads/yay
+    makepkg -si
+    cd $temp_path
+    echo "yay has been installed successfully."
 }

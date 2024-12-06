@@ -1,58 +1,14 @@
 #!/bin/bash
+
+source ./lib/include/log.sh
+source ./lib/include/colors.sh
+source ./lib/include/library.sh
+
 clear
 
 repo="jithurbide-CPNV/dotfiles"
 
-# Get latest tag from GitHub
-get_latest_release() {
-  curl --silent "https://api.github.com/repos/$repo/releases/latest" | # Get latest release from GitHub api
-    grep '"tag_name":' |                                            # Get tag line
-    sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
-}
 
-# Get latest zip from GitHub
-get_latest_zip() {
-  curl --silent "https://api.github.com/repos/$repo/releases/latest" | # Get latest release from GitHub api
-    grep '"zipball_url":' |                                            # Get tag line
-    sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
-}
-
-# Check if package is installed
-_isInstalled() {
-    package="$1";
-    check="$(sudo pacman -Qs --color always "${package}" | grep "local" | grep "${package} ")";
-    if [ -n "${check}" ] ; then
-        echo 0; #'0' means 'true' in Bash
-        return; #true
-    fi;
-    echo 1; #'1' means 'false' in Bash
-    return; #false
-}
-
-# Install required packages
-_installPackages() {
-    toInstall=();
-    for pkg; do
-        if [[ $(_isInstalled "${pkg}") == 0 ]]; then
-            echo ":: ${pkg} is already installed.";
-            continue;
-        fi;
-        toInstall+=("${pkg}");
-    done;
-    if [[ "${toInstall[@]}" == "" ]]; then
-        # echo "All pacman packages are already installed.";
-        return;
-    fi;
-    printf "Package not installed:\n%s\n" "${toInstall[@]}";
-    sudo pacman --noconfirm -S "${toInstall[@]}";
-}
-_installYay() {
-    git clone https://aur.archlinux.org/yay.git ~/Downloads/yay
-    cd ~/Downloads/yay
-    makepkg -si
-    cd $temp_path
-    echo "yay has been installed successfully."
-}
 # Required packages for the installer
 packages=(
     "wget"
@@ -65,12 +21,7 @@ packages=(
 
 latest_version=$(get_latest_release)
 
-# Some colors
-GREEN='\033[0;32m'
-NONE='\033[0m'
 
-# Header
-echo -e "${GREEN}"
 cat <<"EOF"
    ____         __       ____       
   /  _/__  ___ / /____ _/ / /__ ____
@@ -142,29 +93,48 @@ _installYay;
 echo
 
 
-# Select the dotfiles version
-echo "Please choose between: "
-echo "- ML4W Dotfiles for Hyprland $latest_version (latest stable release)"
-echo "- ML4W Dotfiles for Hyprland Rolling Release (main branch including the latest commits)"
-echo
-version=$(gum choose "main-release" "rolling-release" "CANCEL")
-if [ "$version" == "main-release" ]; then
-    echo ":: Installing Main Release"
-    yay -S --noconfirm ml4w-hyprland
-elif [ "$version" == "rolling-release" ]; then
-    echo ":: Installing Rolling Release"
-    yay -S ml4w-hyprland-git
-elif [ "$version" == "CANCEL" ]; then
-    echo ":: Setup canceled"
-    exit 130    
+
+gum confirm "Are you ready to start the install?"
+result=$?
+
+if [ $result -eq 0 ]; then
+    echo ":: Installing will start now."
 else
     echo ":: Setup canceled"
     exit 130
 fi
-echo ":: Installation complete."
-echo
-# Start Spinner
-gum spin --spinner dot --title "Starting setup now..." -- sleep 3
+
+#
+#starting package installation
+figlet "Installing Base Packages"
+source ./share/packages/arch/install.sh
+install_packages "${packages[@]}"
+
+figlet "Installing Hyprland Packages"
+source ./share/packages/arch/hyprland.sh
+install_packages "${packages[@]}"
 
 # Start setup
-ml4w-hyprland-setup -p arch
+gum confirm "Install is finish, did you want to reboot ?"
+result=$?
+
+if [ $result -eq 0 ]; then
+    echo ":: Rebooting ..."
+    sudo shutdown - h now
+else
+    echo ":: Setup complete, go in shell"
+    exit 1
+fi
+
+#
+#starting package installation
+figlet "Installing Base Packages"
+source ./share/packages/arch/install.sh
+install_packages "${packages[@]}"
+
+figlet "Installing Hyprland Packages"
+source ./share/packages/arch/hyprland.sh
+install_packages "${packages[@]}"
+
+# Start setup
+

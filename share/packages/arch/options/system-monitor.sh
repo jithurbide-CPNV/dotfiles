@@ -1,5 +1,4 @@
 optdepends=(
     "htop"
-    "btop"
-    "missioncenter"
+    "bashtop"
 );
